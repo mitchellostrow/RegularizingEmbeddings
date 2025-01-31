@@ -61,7 +61,8 @@ class SequenceModel(pl.LightningModule):
         # x, y = batch
         x = batch[..., :-1, :]
         y = batch[..., 1:, :]
-        y_hat, _ = self(x)
+
+        y_hat, z_hat = self.model(x)
         loss = self.loss_fn(y_hat, y)
         
         self.log(f"{stage}_loss", loss, on_epoch=True, prog_bar=True)
