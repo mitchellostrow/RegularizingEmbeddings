@@ -67,3 +67,5 @@ checkpoints/
 *.h5
 *.npy
 *.npz
+
+outputs
