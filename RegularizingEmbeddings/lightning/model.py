@@ -22,7 +22,7 @@ class SequenceModel(pl.LightningModule):
         self.save_hyperparameters()
         
         # Instantiate model using Hydra
-        self.model = hydra.utils.instantiate(config.models)
+        self.model = hydra.utils.instantiate(config.model)
         self.config = config
         self.init_criterion()
         

@@ -1,6 +1,6 @@
 defaults:
   - training: train
-  - models: lru
+  - model: lru
   - data: dysts
   # - slurm: default
   - _self_
