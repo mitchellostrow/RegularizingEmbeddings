@@ -1,8 +1,5 @@
 import torch
 
-def euclidean_norm(x):
-    return torch.norm(x, dim=-1)
-
 class TanglingRegularization:
     """
         TanglingRegularization
@@ -32,12 +29,30 @@ class TanglingRegularization:
     This is O(B^2 S^2) and we can do better.
     """
 
-    def __init__(self, mode: str = 'efficient', epsilon: float = 1e-6, dT: float = 1e-6 ):
+    def __init__(self, mode: str = 'efficient', epsilon: float = 1e-6, dT: float = 1e-6, normalize: bool = True):
         self.mode = mode
         self.epsilon = epsilon
         self.dT = dT
+        self.normalize = normalize
+
+    def normalize_data(self, x):
+       B,S,D = x.shape
+       # reshape x to (B*S, D)
+       x = x.reshape(-1, D)
+       
+       x_min = x.min(dim=0)[0]  # Shape: (D,)
+       x_max = x.max(dim=0)[0]  # Shape: (D,)
+       x_range = x_max - x_min
+       x_range[x_range == 0] = 1.0
+       x = (x - x_min) / x_range
+       x = x.reshape(B, S, D)
+
+       return x
 
     def __call__(self, x):
+        if self.normalize:
+            x = self.normalize_data(x)
+            
         if self.mode == 'naive':
             return self.naive_implementation(x)
         elif self.mode == 'efficient':
