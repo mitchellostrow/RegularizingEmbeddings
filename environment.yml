@@ -1,0 +1,24 @@
+name: reg_emb
+
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+  - defaults
+
+dependencies:
+  - python=3.11
+  - pytorch
+  - pytorch-cuda=12.1
+  - cudnn
+  - lightning
+  - pandas
+  - pip
+  - pip:
+      - torchdiffeq
+      - wandb
+      - hydra-core
+      - gitpython
+      - mlflow
+      - tensorboard
+      - tensorboardX
