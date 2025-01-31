@@ -79,12 +79,8 @@ def train(config: DictConfig):
     # Initialize data module
     # TODO add a way to generate thse datasets
     train_set, val_set, test_set = None, None, None
-    data_module = SequenceDataModule(
-        datasets=(train_set, val_set, test_set),
-        batch_size=config.data.batch_size,
-        num_workers=config.data.num_workers,
-        pin_memory=config.data.pin_memory,
-    )
+    data_module = hydra.utils.instantiate(config.data, datasets=(train_set, val_set, test_set))
+    
     # Train
     trainer.fit(model, data_module)
 
