@@ -28,13 +28,8 @@ class SequenceModel(pl.LightningModule):
         
     # ------------------------------ training setup ------------------------------ #
     def configure_optimizers(self) -> dict:
-<<<<<<< HEAD:src/lightning/model.py
-        self.optimizer = hydra.utils.instantiate(self.config.optimizer, params=self.model.parameters())
-        self.scheduler = hydra.utils.instantiate(self.config.scheduler, optimizer=self.optimizer)
-=======
         self.optimizer = hydra.utils.instantiate(self.config.training.optimizer, params=self.model.parameters())
         self.scheduler = hydra.utils.instantiate(self.config.training.scheduler, optimizer=self.optimizer)
->>>>>>> ec4c5c534c930bef028bb7176ed8bb053fac76f9:RegularizingEmbeddings/lightning/model.py
         return {
             "optimizer": self.optimizer,
             "lr_scheduler": {
