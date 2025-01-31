@@ -89,4 +89,9 @@ def compute_noise_amp_k(
 
     sig = np.mean(E_k / eps_k)
 
+    if normalize:
+        norm_factor = np.sum(1/eps_k)
+        sig /= norm_factor
+
     return sig, np.mean(E_k), np.mean(eps_k)
+
