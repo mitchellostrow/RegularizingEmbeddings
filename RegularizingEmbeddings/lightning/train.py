@@ -78,8 +78,6 @@ def train(config: DictConfig):
     torch.random.manual_seed(config.data.flow.random_state)
     eq, sol, dt = make_trajectories(config)
     values = postprocess_data(config, sol)
-    # Postprocess data
-    values = postprocess_data(config, sol)
 
     config.model.input_dim = values.shape[-1]
 
