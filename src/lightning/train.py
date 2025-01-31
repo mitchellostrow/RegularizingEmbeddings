@@ -80,7 +80,7 @@ def train(config: DictConfig):
     # TODO add a way to generate thse datasets
     train_set, val_set, test_set = None, None, None
     data_module = hydra.utils.instantiate(config.data, datasets=(train_set, val_set, test_set))
-    
+
     # Train
     trainer.fit(model, data_module)
 
@@ -93,3 +93,4 @@ def train(config: DictConfig):
 
 if __name__ == "__main__":
     train()
+    
