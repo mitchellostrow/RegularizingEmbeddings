@@ -10,6 +10,9 @@ authors = [
   {name = "Fiete Lab", email = "fiete@mit.edu" }
 ]
 
+[project.scripts]
+retrain = "RegularizingEmbeddings.lightning.train:train"
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["RegularizingEmbeddings*"]
