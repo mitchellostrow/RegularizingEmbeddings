@@ -34,7 +34,7 @@ class MetricsCallback(Callback):
             self.log_metrics(metrics, step=trainer.current_epoch)
 
 
-@hydra.main(config_path="../../config", config_name="train")
+@hydra.main(config_path="../../conf", config_name="config", version_base=None)
 def train(config: DictConfig):
     """Main training routine.
 
