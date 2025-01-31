@@ -165,11 +165,13 @@ class LRUMinimal(nn.Module):
         super().train(mode)
         self.rnn = False
 
-    def forward(self, inputs):
+    def forward(self, inputs, epsilon=0):
         # make sure shape is correct here!
         x = self.encoder(inputs)
         x = self.ln(x)
         hiddens, x = self.lru(x, rnn=self.rnn)
         x = self.ln2(x)
         x = self.mlp(x)
+
+        hiddens = hiddens + epsilon * torch.randn_like(hiddens)
         return x, hiddens

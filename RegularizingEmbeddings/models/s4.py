@@ -216,7 +216,7 @@ class S4DMinimal(nn.Module):
         super().train(mode)
         self.rnn = False
 
-    def forward(self, x):
+    def forward(self, x, epsilon=0.0):
         u = self.encoder(x)  # (B, L, input_dim) -> (B, L, d_model)
         b, l, dinp = u.shape
 
@@ -252,4 +252,5 @@ class S4DMinimal(nn.Module):
         # Decode the outputs
         zs = self.decoder(zs)  # (B, L, d_model) -> (B, L, input_dim)
 
+        xs = xs + epsilon * torch.randn_like(xs)
         return zs, xs
