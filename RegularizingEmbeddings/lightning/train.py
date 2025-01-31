@@ -37,21 +37,21 @@ class MetricsCallback(Callback):
 @hydra.main(config_path="../../config", config_name="train")
 def train(config: DictConfig):
     """Main training routine.
-    
+
     Args:
         config: Hydra configuration
     """
     # Set up W&B logging
     wandb_logger = WandbLogger(
-        project=config.wandb.project,
-        name=config.wandb.name,
+        project=config.training.wandb.project,
+        name=config.training.wandb.name,
         config=OmegaConf.to_container(config, resolve=True),
     )
 
     # Initialize callbacks
     callbacks = [
         ModelCheckpoint(
-            dirpath=os.path.join(config.paths.output_dir, "checkpoints"),
+            dirpath=os.path.join(config.training.paths.output_dir, "checkpoints"),
             filename="model-{epoch:02d}-{val_loss:.4f}",
             monitor="val_loss",
             mode="min",
@@ -59,7 +59,7 @@ def train(config: DictConfig):
         ),
         EarlyStopping(
             monitor="val_loss",
-            patience=config.training.patience,
+            patience=config.training.training.patience,
             mode="min",
         ),
         MetricsCallback(),
@@ -67,15 +67,12 @@ def train(config: DictConfig):
 
     # Initialize trainer
     trainer = pl.Trainer(
-        max_epochs=config.training.max_epochs,
+        max_epochs=config.training.training.max_epochs,
         accelerator='auto',
         devices='auto',
         logger=wandb_logger,
         callbacks=callbacks,
     )
-
-    # Initialize model
-    model = SequenceModel(config)
 
     # Initialize data module
     torch.random.manual_seed(config.data.flow.random_state)
@@ -84,8 +81,13 @@ def train(config: DictConfig):
     # Postprocess data
     values = postprocess_data(config, sol)
 
+    config.model.input_dim = values.shape[-1]
+
     # Create train and test sets
     train_dataset, val_dataset, test_dataset, trajs = generate_train_and_test_sets(values, **config.data.train_test_params)
+
+    # Initialize model
+    model = SequenceModel(config)
 
     data_module = SequenceDataModule(
         datasets=(train_dataset, val_dataset, test_dataset),
