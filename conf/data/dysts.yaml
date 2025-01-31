@@ -1,0 +1,53 @@
+flow:
+  # _target_: CommunicationJacobians.dysts_sim.flows.RNNOscillator
+  # _target_: CommunicationJacobians.dysts_sim.flows.Lorenz96
+  _target_: RegularizingEmbeddings.dysts_sim.flows.Lorenz
+  # _target_: CommunicationJacobians.dysts_sim.flows.RNNChaotic
+  # _target_: CommunicationJacobians.dysts_sim.flows.VanDerPol
+  # _target_: CommunicationJacobians.dysts_sim.flows.RNNStableSmall
+  random_state: 42
+  dt: null
+
+trajectory_params:
+  n_periods: 12 
+  method: Radau
+  resample: True
+  pts_per_period: 100
+  return_times: True
+  standardize: False
+  noise: 0.0
+  # num_ics: 40
+  # num_ics: 32
+  num_ics: 20
+  new_ic_mode: 'reference'
+  # new_ic_mode: 'random'
+  # traj_offset_sd: 1
+  traj_offset_sd: 1e-2
+  verbose: True
+
+postprocessing:
+  obs_noise: 0
+  # obs_noise: 5e-2
+  # dims_to_observe: 'all'
+  dims_to_observe: [0]
+  filter_data: False
+  low_pass: 10
+  high_pass: null
+
+train_test_params:
+  # seq_length: 50
+  seq_length: 25
+  seq_spacing: 1
+  # seq_spacing: 50
+  train_percent: 0.7
+  test_percent: 0.1
+  # split_by: time
+  split_by: 'trajectory'
+  dtype: torch.FloatTensor
+  verbose: True
+  delay_embedding_params:
+    # observed_indices: [0]
+    observed_indices: 'all'
+    # n_delays: 6
+    n_delays: 1
+    delay_spacing: 1
