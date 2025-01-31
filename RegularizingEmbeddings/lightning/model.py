@@ -3,8 +3,8 @@ import torch
 import torch.nn as nn
 import hydra
 from omegaconf import DictConfig
-from src.models.lru import LRUMinimal
-from src.models.mamba import MinimalMamba
+from RegularizingEmbeddings.models.lru import LRUMinimal
+from RegularizingEmbeddings.models.mamba import MinimalMamba
 
 
 class SequenceModel(pl.LightningModule):
@@ -22,14 +22,14 @@ class SequenceModel(pl.LightningModule):
         self.save_hyperparameters()
         
         # Instantiate model using Hydra
-        self.model = hydra.utils.instantiate(config.model)
+        self.model = hydra.utils.instantiate(config.models)
         self.config = config
         self.init_criterion()
         
     # ------------------------------ training setup ------------------------------ #
-    def setup_optimizers(self) -> dict:
-        self.optimizer = hydra.utils.instantiate(self.config.optimizer, params=self.model.parameters())
-        self.scheduler = hydra.utils.instantiate(self.config.scheduler, optimizer=self.optimizer)
+    def configure_optimizers(self) -> dict:
+        self.optimizer = hydra.utils.instantiate(self.config.training.optimizer, params=self.model.parameters())
+        self.scheduler = hydra.utils.instantiate(self.config.training.scheduler, optimizer=self.optimizer)
         return {
             "optimizer": self.optimizer,
             "lr_scheduler": {
@@ -41,7 +41,7 @@ class SequenceModel(pl.LightningModule):
         }
 
     def init_criterion(self) -> None:
-        self.loss_fn = hydra.utils.instantiate(self.config.criterion)
+        self.loss_fn = hydra.utils.instantiate(self.config.training.criterion)
 
 
     # ------------------------------ forward pass ------------------------------ #
@@ -58,7 +58,9 @@ class SequenceModel(pl.LightningModule):
             batch: tuple of (x, y)
             stage: "train", "val", or "test"
         """
-        x, y = batch
+        # x, y = batch
+        x = batch[..., :-1, :]
+        y = batch[..., 1:, :]
         y_hat, _ = self(x)
         loss = self.loss_fn(y_hat, y)
         

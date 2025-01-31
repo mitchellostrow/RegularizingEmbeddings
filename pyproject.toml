@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "RegularizingEmbeddings"
+version = "1.0"
+description = "Regularizing Embeddings"
+authors = [
+  {name = "Fiete Lab", email = "fiete@mit.edu" }
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["RegularizingEmbeddings*"]

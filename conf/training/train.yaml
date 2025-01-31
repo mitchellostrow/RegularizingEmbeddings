@@ -1,0 +1,38 @@
+# Wandb configuration
+wandb:
+  project: "sequence_model"
+  name: ${now:%Y-%m-%d_%H-%M-%S}
+
+# Training configuration
+training:
+  max_epochs: 100
+  patience: 50
+
+# Data configuration
+data:
+  __target__: src.lightning.data.SequenceDataModule
+  batch_size: 32
+  num_workers: 4
+  pin_memory: True
+
+# Optimizer configuration
+optimizer:
+  _target_: torch.optim.AdamW
+  lr: 0.001
+  weight_decay: 0.00
+
+# Learning rate scheduler configuration
+scheduler:
+  _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
+  mode: min
+  factor: 0.1
+  patience: 5
+
+# Loss function configuration
+criterion:
+  _target_: torch.nn.MSELoss
+
+# Paths configuration
+paths:
+  # output_dir: ${hydra:runtime.output_dir} 
+  output_dir: 'checkpoints'
