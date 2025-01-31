@@ -1,6 +1,6 @@
 # Model configuration for LRU
-_target_: src.models.lru.LRUMinimal
-input_dim: 64
+_target_: RegularizingEmbeddings.models.lru.LRUMinimal
+input_dim: null
 d_model: 256
 d_state: 64
 mlp_hidden: 1024

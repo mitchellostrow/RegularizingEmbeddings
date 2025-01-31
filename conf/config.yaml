@@ -1,0 +1,12 @@
+defaults:
+  - training: train
+  - model: lru
+  - data: dysts
+  # - slurm: default
+  - _self_
+
+logger: wandb
+
+hydra:
+  job:
+    chdir: True

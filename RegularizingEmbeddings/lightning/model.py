@@ -3,8 +3,8 @@ import torch
 import torch.nn as nn
 import hydra
 from omegaconf import DictConfig
-from src.models.lru import LRUMinimal
-from src.models.mamba import MinimalMamba
+from RegularizingEmbeddings.models.lru import LRUMinimal
+from RegularizingEmbeddings.models.mamba import MinimalMamba
 
 
 class SequenceModel(pl.LightningModule):
@@ -28,8 +28,13 @@ class SequenceModel(pl.LightningModule):
         
     # ------------------------------ training setup ------------------------------ #
     def configure_optimizers(self) -> dict:
+<<<<<<< HEAD:src/lightning/model.py
         self.optimizer = hydra.utils.instantiate(self.config.optimizer, params=self.model.parameters())
         self.scheduler = hydra.utils.instantiate(self.config.scheduler, optimizer=self.optimizer)
+=======
+        self.optimizer = hydra.utils.instantiate(self.config.training.optimizer, params=self.model.parameters())
+        self.scheduler = hydra.utils.instantiate(self.config.training.scheduler, optimizer=self.optimizer)
+>>>>>>> ec4c5c534c930bef028bb7176ed8bb053fac76f9:RegularizingEmbeddings/lightning/model.py
         return {
             "optimizer": self.optimizer,
             "lr_scheduler": {
@@ -41,7 +46,7 @@ class SequenceModel(pl.LightningModule):
         }
 
     def init_criterion(self) -> None:
-        self.loss_fn = hydra.utils.instantiate(self.config.criterion)
+        self.loss_fn = hydra.utils.instantiate(self.config.training.criterion)
 
 
     # ------------------------------ forward pass ------------------------------ #
@@ -58,7 +63,9 @@ class SequenceModel(pl.LightningModule):
             batch: tuple of (x, y)
             stage: "train", "val", or "test"
         """
-        x, y = batch
+        # x, y = batch
+        x = batch[..., :-1, :]
+        y = batch[..., 1:, :]
         y_hat, _ = self(x)
         loss = self.loss_fn(y_hat, y)
         

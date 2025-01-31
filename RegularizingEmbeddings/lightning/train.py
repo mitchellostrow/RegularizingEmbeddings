@@ -1,12 +1,15 @@
 import os
 import hydra
+import torch
 import wandb
 import pytorch_lightning as pl
 from omegaconf import DictConfig, OmegaConf
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, Callback
 
-from src.lightning.model import SequenceModel
+from RegularizingEmbeddings.lightning.model import SequenceModel
+from RegularizingEmbeddings.lightning.data import SequenceDataModule
+from RegularizingEmbeddings.data.data_generation import make_trajectories, postprocess_data, generate_train_and_test_sets
 
 class MetricsCallback(Callback):
     """Custom callback for logging additional metrics to WandB."""
@@ -75,10 +78,21 @@ def train(config: DictConfig):
     model = SequenceModel(config)
 
     # Initialize data module
-    # TODO add a way to generate thse datasets
-    train_set, val_set, test_set = None, None, None
-    data_module = hydra.utils.instantiate(config.data, datasets=(train_set, val_set, test_set))
+    torch.random.manual_seed(config.data.flow.random_state)
+    eq, sol, dt = make_trajectories(config)
+    values = postprocess_data(config, sol)
+    # Postprocess data
+    values = postprocess_data(config, sol)
 
+    # Create train and test sets
+    train_dataset, val_dataset, test_dataset, trajs = generate_train_and_test_sets(values, **config.data.train_test_params)
+
+    data_module = SequenceDataModule(
+        datasets=(train_dataset, val_dataset, test_dataset),
+        batch_size=config.training.data.batch_size,
+        num_workers=config.training.data.num_workers,
+        pin_memory=config.training.data.pin_memory,
+    )
     # Train
     trainer.fit(model, data_module)
 

@@ -33,7 +33,6 @@ class SequenceDataModule(pl.LightningDataModule):
             shuffle=shuffle,
             num_workers=self.num_workers,
             pin_memory=self.pin_memory,
-            persistent_workers=self.config.persistent_workers,
         )
 
     def train_dataloader(self) -> DataLoader:
