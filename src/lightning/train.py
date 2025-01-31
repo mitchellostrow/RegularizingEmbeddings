@@ -7,8 +7,6 @@ from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, Callback
 
 from src.lightning.model import SequenceModel
-from src.lightning.data import SequenceDataModule
-
 
 class MetricsCallback(Callback):
     """Custom callback for logging additional metrics to WandB."""
@@ -93,4 +91,3 @@ def train(config: DictConfig):
 
 if __name__ == "__main__":
     train()
-    

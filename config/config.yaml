@@ -51,4 +51,4 @@ criterion:
 
 # Paths configuration
 paths:
-  output_dir: ${hydra:runtime.output_dir} 
+  output_dir: 'checkpoints'

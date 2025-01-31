@@ -27,7 +27,7 @@ class SequenceModel(pl.LightningModule):
         self.init_criterion()
         
     # ------------------------------ training setup ------------------------------ #
-    def setup_optimizers(self) -> dict:
+    def configure_optimizers(self) -> dict:
         self.optimizer = hydra.utils.instantiate(self.config.optimizer, params=self.model.parameters())
         self.scheduler = hydra.utils.instantiate(self.config.scheduler, optimizer=self.optimizer)
         return {
