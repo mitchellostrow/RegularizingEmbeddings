@@ -45,7 +45,7 @@ class MinimalMamba(nn.Module):
         self.norm = MambaRMSNorm(input_dim)
         self.norm_f = MambaRMSNorm(d_model)
 
-    def forward(self, x):
+    def forward(self, x, epsilon=0):
         """Mamba block forward. This looks the same as Figure 3 in Section 3.4 in the Mamba paper [1].
 
         Args:
@@ -72,6 +72,9 @@ class MinimalMamba(nn.Module):
         x = F.silu(x)
 
         y, hiddens = self.ssm(x)
+
+        hiddens = hiddens + epsilon * torch.randn_like(hiddens)
+        self.hiddens = hiddens
 
         y = y * F.silu(res)
 

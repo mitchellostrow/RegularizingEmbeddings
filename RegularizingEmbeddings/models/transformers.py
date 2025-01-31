@@ -7,7 +7,7 @@ import numpy as np
 
 
 class MLP(nn.Module):
-    def __init__(self, d_model, mlp_hidden, output_dim=None,dropout=0.0):
+    def __init__(self, d_model, mlp_hidden, output_dim=None, dropout=0.0):
         super().__init__()
         if output_dim is None:
             output_dim = d_model
@@ -22,6 +22,7 @@ class MLP(nn.Module):
         x = self.dropout(x)
         x = self.c_proj(x)
         return x
+
 
 class CausalSelfAttention(nn.Module):
     def __init__(self, d_model, n_head, temp=None):
@@ -64,7 +65,7 @@ class CausalSelfAttention(nn.Module):
         attn_weight += attn_bias
         self.attn_scores = torch.softmax(attn_weight, dim=-1)
 
-        out = self.attn_scores @ v # (B, nh, T, T) x (B, nh, T, hs) -> (B, nh, T, hs)
+        out = self.attn_scores @ v  # (B, nh, T, T) x (B, nh, T, hs) -> (B, nh, T, hs)
 
         out = out.transpose(1, 2).contiguous().view(batch, length, dim)
         out = self.attn_out(out)
@@ -105,6 +106,7 @@ class Block(nn.Module):
 
         return x
 
+
 class PositionalEncoding(nn.Module):
     def __init__(
         self,
@@ -139,7 +141,7 @@ class GPT(nn.Module):
         seed=10,
         temp=None,
         use_pe=True,
-        pe_type='learnable' #learnable vs sinusoid
+        pe_type="learnable",  # learnable vs sinusoid
     ):
         super().__init__()
 
@@ -152,22 +154,29 @@ class GPT(nn.Module):
             mlp_hidden = d_model * 4
 
         if use_pe not in {True, False, "pe_softmax"}:
-            raise ValueError(f"use_pe must be one of True, False, or 'pe_softmax', got {use_pe}")
+            raise ValueError(
+                f"use_pe must be one of True, False, or 'pe_softmax', got {use_pe}"
+            )
 
-        if pe_type not in {'learnable','sinusoid'}:
-            raise ValueError(f"pe_type must be one of 'learnable' or 'sinusoid', got {pe_type}")
-
+        if pe_type not in {"learnable", "sinusoid"}:
+            raise ValueError(
+                f"pe_type must be one of 'learnable' or 'sinusoid', got {pe_type}"
+            )
 
         self.transformer = nn.ModuleDict(
             dict(
                 wte=nn.Linear(input_dim, d_model),
-                wpe=nn.Embedding(context_length, d_model) if pe_type == 'learnable' else PositionalEncoding(d_model, context_length),
+                wpe=(
+                    nn.Embedding(context_length, d_model)
+                    if pe_type == "learnable"
+                    else PositionalEncoding(d_model, context_length)
+                ),
                 h=Block(d_model, n_head, temp, mlp_hidden),
                 mlp=MLP(d_model, mlp_hidden, output_dim=input_dim),
             )
         )
 
-    def forward(self, x):
+    def forward(self, x, epsilon=0):
         device = x.device
         # rather than asserting,just raise a warning
         if x.size(1) > self.context_length:
@@ -182,7 +191,6 @@ class GPT(nn.Module):
         # forward the model itself
         pos = torch.arange(0, x.size(1), dtype=torch.long, device=device)  # shape (t)
         embed = self.transformer.wte(x)  # token embeddings of shape (b, t, n_embd)
-
         pos_emb = self.transformer.wpe(pos)  # position embeddings of shape (t, n_embd)
 
         if self.use_pe == "pe_softmax":
@@ -195,9 +203,15 @@ class GPT(nn.Module):
             x = self.transformer.h(x)
 
         x = self.transformer.mlp(x)
+
+        self.transformer.h.attn_out = (
+            self.transformer.h.attn_out
+            + epsilon * torch.randn_like(self.transformer.h.attn_out)
+        )
+
         return x, self.transformer.h.attn_out
 
-    def forward_long(self, x):
+    def forward_long(self, x, epsilon=0):
         device = x.device
         chunks = x.size(1) // self.context_length
         outs = []
@@ -217,4 +231,7 @@ class GPT(nn.Module):
         # stack and return
         outs = torch.cat(outs, dim=1)
         attn_outs = torch.cat(attn_outs, dim=1)
+
+        attn_outs = attn_outs + epsilon * torch.randn_like(attn_outs)
+
         return outs, attn_outs

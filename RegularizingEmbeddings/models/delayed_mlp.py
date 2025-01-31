@@ -67,7 +67,7 @@ class DelayedMLP(nn.Module):
         self.n_delays = n_delays
         self.delay_interval = delay_interval
 
-    def forward(self, x):
+    def forward(self, x, epsilon=0):
         # x should have shape (B, T, D)
         # first, reshape to have B,T-delay, D*delay
         # then add the first delays as well to the beginning of the sequence, concatenated with zeros
@@ -76,6 +76,9 @@ class DelayedMLP(nn.Module):
         x = self.input(x)
         x = torch.relu(x)
         hidden = x.clone()
+
+        hidden = hidden + epsilon * torch.randn_like(hidden)
+
         for fc in self.fcs:
             x = fc(x)
             x = torch.relu(x)
