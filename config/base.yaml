@@ -1,3 +1,8 @@
+defaults:
+  - _self_
+  - models: lru  # default model config, can be overridden
+  
+
 # Wandb configuration
 wandb:
   project: "sequence_model"
@@ -6,23 +11,13 @@ wandb:
 # Training configuration
 training:
   max_epochs: 100
-  patience: 10
-  accelerator: "auto"
-  devices: 1
-  gradient_clip_val: 1.0
+  patience: 50
 
 # Data configuration
 data:
   batch_size: 32
   num_workers: 4
   pin_memory: True
-  datasets: ??? # To be filled with actual datasets
-
-# Model configuration
-model:
-  _target_: src.models.your_model.YourModel
-  hidden_size: 256
-  # other model parameters...
 
 # Optimizer configuration
 optimizer:

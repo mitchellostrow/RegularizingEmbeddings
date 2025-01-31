@@ -1,0 +1,12 @@
+# Model configuration for LRU
+model:
+  _target_: src.models.transformers.GPT
+  input_dim: 64
+  d_model: 256
+  n_head: 64
+  context_length: 256
+  mlp_hidden: null
+  seed: 10
+  use_pe: true
+  pe_type: 'learnable'
+
