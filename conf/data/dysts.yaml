@@ -12,7 +12,7 @@ trajectory_params:
   n_periods: 12 
   method: Radau
   resample: True
-  pts_per_period: 100
+  pts_per_period: 200
   return_times: True
   standardize: False
   noise: 0.0
@@ -28,8 +28,8 @@ trajectory_params:
 postprocessing:
   obs_noise: 0
   # obs_noise: 5e-2
-  # dims_to_observe: 'all'
-  dims_to_observe: [0]
+  dims_to_observe: 'all'
+  # dims_to_observe: [0]
   filter_data: False
   low_pass: 10
   high_pass: null
