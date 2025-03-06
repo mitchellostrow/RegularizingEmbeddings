@@ -2,11 +2,14 @@ from sklearn.neighbors import NearestNeighbors
 import numpy as np
 import torch
 
-
 def find_neighbors(embedding, n_neighbors):
-    nbrs = NearestNeighbors(n_neighbors=n_neighbors, algorithm='auto').fit(embedding)
-    distances, indices = nbrs.kneighbors(embedding)
-    # indices = indices[:, 1:]  # exclude present point
+    #we need to implement a torch friendly version of knn
+    dists = torch.cdist(embedding, embedding, p=2)
+    distances , indices = torch.topk(dists, n_neighbors+1, largest=False)
+    
+    # nbrs = NearestNeighbors(n_neighbors=n_neighbors, algorithm='auto').fit(embedding)
+    # distances, indices = nbrs.kneighbors(embedding)
+    # # indices = indices[:, 1:]  # exclude present point
     return distances, indices
 
 def get_dists_bw_all_neighbors(embedding, indices):

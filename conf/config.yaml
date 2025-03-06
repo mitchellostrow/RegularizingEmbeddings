@@ -2,6 +2,7 @@ defaults:
   - training: train
   - model: lru
   - data: dysts
+  - evals: evals
   # - slurm: default
   - _self_
 

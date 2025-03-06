@@ -16,6 +16,7 @@
 import numpy as np
 import torch
 from copy import deepcopy
+import omegaconf
 from sklearn.neighbors import NearestNeighbors
 from sklearn.linear_model import ElasticNet
 from sklearn.model_selection import train_test_split
@@ -240,6 +241,33 @@ def compute_all_pred_stats(true_vals, pred_vals, rank, norm=True):
         "logMSE": log_mse(true_vals, pred_vals, norm=norm),
     }
 
+def predict_hidden_dims(true, embedded, dim_observed, model=ElasticNet, **model_kwargs):
+    # given the true full state and the embedding from the net, try and predict
+    # the unobserved states of the model
+    d_true = true.shape[-1]
+    if dim_observed != 'all':
+        if isinstance(dim_observed,(list,omegaconf.listconfig.ListConfig)):
+            hidden_inds = [i for i in range(d_true) if i not in dim_observed]
+        elif isinstance(dim_observed,int):
+            hidden_inds = [i for i in range(d_true) if i != dim_observed]
+    else:
+        hidden_inds = np.arange(d_true) #fake decoding but whatever
+
+    hidden_true = true[..., hidden_inds]
+
+    model = model(**model_kwargs)
+
+    if hidden_true.ndim == 3 and embedded.ndim == 3:
+        hidden_true = hidden_true.reshape(-1, hidden_true.shape[-1])
+        embedded = embedded.reshape(-1, embedded.shape[-1])
+    # split embedded into train and test
+    X_train, X_test, y_train, y_test = train_test_split(
+        embedded, hidden_true, test_size=0.2
+    )
+
+    model.fit(X_train, y_train)
+
+    return model.score(X_train, y_train), model.score(X_test, y_test), model
 
 # def calc_lyap(traj1, traj2, eps_max, tvals):
 #     separation = np.linalg.norm(traj1 - traj2, axis=1) / np.linalg.norm(traj1, axis=1)
@@ -503,24 +531,4 @@ def compute_all_pred_stats(true_vals, pred_vals, rank, norm=True):
 #     return gpdists
 
 
-# def predict_hidden_dims(true, embedded, dim_observed, model=ElasticNet, **model_kwargs):
-#     # given the true full state and the embedding from the net, try and predict
-#     # the unobserved states of the model
-#     d_true = true.shape[-1]
-#     hidden_true = [i for i in range(d_true) if i != dim_observed]
 
-#     hidden_true = true[..., hidden_true]
-
-#     model = model(**model_kwargs)
-
-#     if hidden_true.ndim == 3 and embedded.ndim == 3:
-#         hidden_true = hidden_true.reshape(-1, hidden_true.shape[-1])
-#         embedded = embedded.reshape(-1, embedded.shape[-1])
-#     # split embedded into train and test
-#     X_train, X_test, y_train, y_test = train_test_split(
-#         embedded, hidden_true, test_size=0.2
-#     )
-
-#     model.fit(X_train, y_train)
-
-#     return model.score(X_train, y_train), model.score(X_test, y_test), model

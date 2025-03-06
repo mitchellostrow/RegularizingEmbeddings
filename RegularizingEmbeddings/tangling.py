@@ -101,8 +101,11 @@ class TanglingRegularization:
         dx_flat = dx.reshape(-1, D)  # Shape: (B*S, D)
         
         # Compute all pairwise differences
-        x_diff = x_flat.unsqueeze(1) - x_flat.unsqueeze(0)   # Shape: (B*S, B*S, D)
-        dx_diff = dx_flat.unsqueeze(1) - dx_flat.unsqueeze(0) # Shape: (B*S, B*S, D)
+        #use torch cdist
+        x_diff = torch.cdist(x_flat, x_flat, p=2)   # Shape: (B*S, B*S)
+        dx_diff = torch.cdist(dx_flat, dx_flat, p=2)
+        # x_diff = x_flat.unsqueeze(1) - x_flat.unsqueeze(0)   # Shape: (B*S, B*S, D)
+        # dx_diff = dx_flat.unsqueeze(1) - dx_flat.unsqueeze(0) # Shape: (B*S, B*S, D)
         
         # Compute norms (removed squared from here)
         x_norms = torch.norm(x_diff, dim=-1)   # Shape: (B*S, B*S)

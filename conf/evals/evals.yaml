@@ -1,0 +1,32 @@
+metrics: [ 
+    compute_all_pred_stats,
+    neighbors_comparison,
+    predict_hidden_dims_lm,
+    predict_hidden_dims_mlp,
+    noise_amplification,
+    tangling
+    ]
+
+predict_hiddens:
+    linear_model_kwargs:
+      l1_ratio: 0.4 
+      alpha: 1e-1 
+      max_iter: 2000
+    mlp_kwargs:
+      hidden_layer_sizes: [100]
+      alpha: 1e-4
+      max_iter: 2000
+
+neighbors_comparison:
+    n_neighbors: 20
+
+noise_amplification:
+  n_neighbors: 8
+  max_T: 20
+  normalize: True
+
+tangling: 
+  mode: efficient
+  epsilon: 1e-6
+  dT: 1e-6 
+  normalize: True
