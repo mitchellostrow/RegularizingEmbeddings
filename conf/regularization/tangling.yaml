@@ -1,0 +1,5 @@
+_target_: RegularizingEmbeddings.regularization.tangling.TanglingRegularization
+mode: efficient
+epsilon: 1e-6 
+dt: 1e-6  # will be updated after data generation
+normalize: true

@@ -32,6 +32,9 @@ scheduler:
 criterion:
   _target_: torch.nn.MSELoss
 
+regularization_lambda: 1e-3  # scaling of regularization penalty
+
+
 # Paths configuration
 paths:
   # output_dir: ${hydra:runtime.output_dir} 

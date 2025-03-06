@@ -1,6 +1,8 @@
 import torch
 
-class TanglingRegularization:
+from RegularizingEmbeddings.regularization.base import AbstractRegularization
+
+class TanglingRegularization(AbstractRegularization):
     """
         TanglingRegularization
 
@@ -29,11 +31,23 @@ class TanglingRegularization:
     This is O(B^2 S^2) and we can do better.
     """
 
-    def __init__(self, mode: str = 'efficient', epsilon: float = 1e-6, dT: float = 1e-6, normalize: bool = True):
+    def __init__(self, mode: str = 'efficient', epsilon: float = 1e-6, dt: float = 1e-6, normalize: bool = True):
         self.mode = mode
         self.epsilon = epsilon
-        self.dT = dT
+        self.dt = dt
         self.normalize = normalize
+
+
+    def __call__(self, x):
+        if self.normalize:
+            x = self.normalize_data(x)
+            
+        if self.mode == 'naive':
+            return self.naive_implementation(x)
+        elif self.mode == 'efficient':
+            return self.efficient_implementation(x)
+        else:
+            raise ValueError(f"Invalid mode: {self.mode}")
 
     def normalize_data(self, x):
        B,S,D = x.shape
@@ -49,19 +63,9 @@ class TanglingRegularization:
 
        return x
 
-    def __call__(self, x):
-        if self.normalize:
-            x = self.normalize_data(x)
-            
-        if self.mode == 'naive':
-            return self.naive_implementation(x)
-        elif self.mode == 'efficient':
-            return self.efficient_implementation(x)
-        else:
-            raise ValueError(f"Invalid mode: {self.mode}")
-    
+
     def naive_implementation(self, x):
-        dx = (x[:, 1:, :] - x[:, :-1, :]) / self.dT
+        dx = (x[:, 1:, :] - x[:, :-1, :]) / self.dt
         x = x[:, 1:, :]
 
         assert x.shape == dx.shape, f"x.shape: {x.shape}, dx.shape: {dx.shape}"
@@ -91,7 +95,7 @@ class TanglingRegularization:
 
     def efficient_implementation(self, x):
         # Compute time derivatives
-        dx = (x[:, 1:, :] - x[:, :-1, :]) / self.dT
+        dx = (x[:, 1:, :] - x[:, :-1, :]) / self.dt
         x = x[:, 1:, :]  # Use same positions as naive implementation
         
         B, S, D = x.shape
