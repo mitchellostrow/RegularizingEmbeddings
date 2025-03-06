@@ -84,8 +84,8 @@ def train(config: DictConfig):
     logger.info(f"Data generated. Creating train and test sets")
 
     # update dt in config
-    config.data.flow.dt = dt
-    config.regularization.dt = dt
+    config.data.flow.dt = float(dt)
+    config.regularization.dt = float(dt)
 
     config.model.input_dim = values.shape[-1]
 
