@@ -1,0 +1,6 @@
+# Model configuration for DelayMLP
+_target_: RegularizingEmbeddings.models.delayed_mlp.DelayedMLP
+input_dim: 1
+mlp_hidden: 50
+d_model: 10 #here, this is the number of delays
+delay_interval: 1
