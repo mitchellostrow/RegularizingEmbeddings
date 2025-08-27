@@ -1,0 +1,19 @@
+defaults:
+  - training: train
+  - model: lru
+  - data: dysts
+  - regularization: amplification
+  # - slurm: default
+  - _self_
+
+logger: wandb
+
+hydra:
+  job:
+    chdir: True
+  sweeper:
+    params:
+      ++regularization.n_neighbors: 2, 5, 10, 20
+      ++regularization.max_T: 1, 5, 10, 20
+      ++training.regularization_lambda: 1e-3, 1e-2, 1e-1, 1, 10, 100
+    
