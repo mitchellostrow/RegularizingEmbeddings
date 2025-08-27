@@ -3,7 +3,7 @@ defaults:
   - model: lru
   - data: dysts
   - regularization: amplification
-  # - slurm: default
+  - slurm: default
   - _self_
 
 logger: wandb
