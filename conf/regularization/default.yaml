@@ -1,0 +1,2 @@
+_target_: RegularizingEmbeddings.regularization.base.NoRegularization
+dt: 1e-6

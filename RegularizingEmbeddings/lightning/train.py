@@ -6,6 +6,7 @@ import pytorch_lightning as pl
 from omegaconf import DictConfig, OmegaConf
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, Callback
+from loguru import logger
 
 from RegularizingEmbeddings.lightning.model import SequenceModel
 from RegularizingEmbeddings.lightning.data import SequenceDataModule
@@ -41,6 +42,7 @@ def train(config: DictConfig):
     Args:
         config: Hydra configuration
     """
+    logger.info(f"Training with config: {config}")
     # Set up W&B logging
     wandb_logger = WandbLogger(
         project=config.training.wandb.project,
@@ -73,11 +75,17 @@ def train(config: DictConfig):
         logger=wandb_logger,
         callbacks=callbacks,
     )
+    logger.info(f"Trainer initialized. Generating data")
 
     # Initialize data module
     torch.random.manual_seed(config.data.flow.random_state)
     eq, sol, dt = make_trajectories(config)
     values = postprocess_data(config, sol)
+    logger.info(f"Data generated. Creating train and test sets")
+
+    # update dt in config
+    config.data.flow.dt = float(dt)
+    config.regularization.dt = float(dt)
 
     config.model.input_dim = values.shape[-1]
 
@@ -93,10 +101,13 @@ def train(config: DictConfig):
         num_workers=config.training.data.num_workers,
         pin_memory=config.training.data.pin_memory,
     )
+    logger.info(f"Data module initialized. Training model")
+
     # Train
     trainer.fit(model, data_module)
 
     # Test
+    logger.info(f"Testing model")
     trainer.test(model, data_module)
 
     # Close wandb run

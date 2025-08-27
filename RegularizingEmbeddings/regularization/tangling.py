@@ -1,6 +1,8 @@
 import torch
 
-class TanglingRegularization:
+from RegularizingEmbeddings.regularization.base import AbstractRegularization
+
+class TanglingRegularization(AbstractRegularization):
     """
         TanglingRegularization
 
@@ -29,25 +31,12 @@ class TanglingRegularization:
     This is O(B^2 S^2) and we can do better.
     """
 
-    def __init__(self, mode: str = 'efficient', epsilon: float = 1e-6, dT: float = 1e-6, normalize: bool = True):
+    def __init__(self, mode: str = 'efficient', epsilon: float = 1e-6, dt: float = 1e-6, normalize: bool = True):
         self.mode = mode
         self.epsilon = epsilon
-        self.dT = dT
+        self.dt = dt
         self.normalize = normalize
 
-    def normalize_data(self, x):
-       B,S,D = x.shape
-       # reshape x to (B*S, D)
-       x = x.reshape(-1, D)
-       
-       x_min = x.min(dim=0)[0]  # Shape: (D,)
-       x_max = x.max(dim=0)[0]  # Shape: (D,)
-       x_range = x_max - x_min
-       x_range[x_range == 0] = 1.0
-       x = (x - x_min) / x_range
-       x = x.reshape(B, S, D)
-
-       return x
 
     def __call__(self, x):
         if self.normalize:
@@ -59,9 +48,31 @@ class TanglingRegularization:
             return self.efficient_implementation(x)
         else:
             raise ValueError(f"Invalid mode: {self.mode}")
-    
+
+    def normalize_data(self, x):
+        B, S, D = x.shape
+        
+        # Handle complex input by taking real part if necessary
+        if torch.is_complex(x):
+            raise ValueError("Complex data is not supported for tangling regularization")
+        
+        # reshape x to (B*S, D)
+        x = x.reshape(-1, D)
+        
+        # Use real-valued operations
+        x_min = torch.min(x, dim=0)[0]  # Shape: (D,)
+        x_max = torch.max(x, dim=0)[0]  # Shape: (D,)
+        x_range = x_max - x_min
+        # Use where instead of direct assignment for better gradient flow
+        x_range = torch.where(x_range == 0, torch.ones_like(x_range), x_range)
+        x = (x - x_min) / x_range
+        x = x.reshape(B, S, D)
+        
+        return x
+
+
     def naive_implementation(self, x):
-        dx = (x[:, 1:, :] - x[:, :-1, :]) / self.dT
+        dx = (x[:, 1:, :] - x[:, :-1, :]) / self.dt
         x = x[:, 1:, :]
 
         assert x.shape == dx.shape, f"x.shape: {x.shape}, dx.shape: {dx.shape}"
@@ -90,8 +101,12 @@ class TanglingRegularization:
         return Q
 
     def efficient_implementation(self, x):
+        # Handle complex input by taking real part if necessary
+        if torch.is_complex(x):
+            x = x.real
+        
         # Compute time derivatives
-        dx = (x[:, 1:, :] - x[:, :-1, :]) / self.dT
+        dx = (x[:, 1:, :] - x[:, :-1, :]) / self.dt
         x = x[:, 1:, :]  # Use same positions as naive implementation
         
         B, S, D = x.shape
@@ -104,16 +119,18 @@ class TanglingRegularization:
         x_diff = x_flat.unsqueeze(1) - x_flat.unsqueeze(0)   # Shape: (B*S, B*S, D)
         dx_diff = dx_flat.unsqueeze(1) - dx_flat.unsqueeze(0) # Shape: (B*S, B*S, D)
         
-        # Compute norms (removed squared from here)
-        x_norms = torch.norm(x_diff, dim=-1)   # Shape: (B*S, B*S)
-        dx_norms = torch.norm(dx_diff, dim=-1) # Shape: (B*S, B*S)
+        # Compute squared norms (more stable than regular norm)
+        x_norms = torch.sum(x_diff * x_diff, dim=-1)   # Shape: (B*S, B*S)
+        dx_norms = torch.sum(dx_diff * dx_diff, dim=-1) # Shape: (B*S, B*S)
         
-        # Compute ratios (using non-squared norms)
-        ratios = (dx_norms / (x_norms + self.epsilon))**2  # Shape: (B*S, B*S)
+        # Compute ratios
+        ratios = dx_norms / (x_norms + self.epsilon)  # Shape: (B*S, B*S)
         
-        # Get maximum ratio for each point (excluding self-comparisons)
-        mask = torch.eye(B*S, device=x.device)
-        ratios.masked_fill_(mask.bool(), -float('inf'))
+        # Create mask for self-comparisons
+        mask = torch.eye(B*S, dtype=torch.bool, device=x.device)
+        ratios = ratios.masked_fill(mask, -float('inf'))
+        
+        # Get maximum ratio for each point
         max_ratios = torch.max(ratios, dim=1)[0]  # Shape: (B*S,)
         
         # Reshape back to (B, S)

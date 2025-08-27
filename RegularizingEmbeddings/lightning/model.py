@@ -5,7 +5,7 @@ import hydra
 from omegaconf import DictConfig
 from RegularizingEmbeddings.models.lru import LRUMinimal
 from RegularizingEmbeddings.models.mamba import MinimalMamba
-
+from loguru import logger
 
 class SequenceModel(pl.LightningModule):
     def __init__(
@@ -42,6 +42,10 @@ class SequenceModel(pl.LightningModule):
 
     def init_criterion(self) -> None:
         self.loss_fn = hydra.utils.instantiate(self.config.training.criterion)
+        self.regularization = hydra.utils.instantiate(self.config.regularization)
+        self.lam = torch.tensor(self.config.training.regularization_lambda)
+        logger.info(f"Regularization lambda: {self.lam}, regularization: {self.regularization.__class__.__name__}")
+
 
 
     # ------------------------------ forward pass ------------------------------ #
@@ -64,9 +68,14 @@ class SequenceModel(pl.LightningModule):
 
         y_hat, z_hat = self.model(x)
         loss = self.loss_fn(y_hat, y)
-        
+        reg_loss = self.regularization(z_hat)
+
         self.log(f"{stage}_loss", loss, on_epoch=True, prog_bar=True)
-        return loss
+        self.log(f"{stage}_reg_loss", reg_loss, on_epoch=True, prog_bar=True)
+
+        total_loss = loss + self.lam * reg_loss
+        self.log(f"{stage}_total_loss", total_loss, on_epoch=True, prog_bar=True)
+        return total_loss
     
     def training_step(self, batch, batch_idx) -> torch.Tensor:
         return self._step(batch, "train")

@@ -2,6 +2,7 @@ defaults:
   - training: train
   - model: lru
   - data: dysts
+  - regularization: tangling
   # - slurm: default
   - _self_
 
