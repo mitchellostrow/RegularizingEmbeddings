@@ -47,6 +47,7 @@ def train(config: DictConfig):
     wandb_logger = WandbLogger(
         project=config.training.wandb.project,
         name=config.training.wandb.name,
+        entity=config.training.wandb.entity,
         config=OmegaConf.to_container(config, resolve=True),
     )
 
@@ -74,6 +75,8 @@ def train(config: DictConfig):
         devices='auto',
         logger=wandb_logger,
         callbacks=callbacks,
+        limit_train_batches=config.training.training.limit_train_batches,
+        limit_val_batches=config.training.training.limit_val_batches
     )
     logger.info(f"Trainer initialized. Generating data")
 

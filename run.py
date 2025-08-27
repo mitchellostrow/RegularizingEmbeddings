@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings("ignore")
+
 import hydra
 from omegaconf import DictConfig
 import RegularizingEmbeddings.lightning.train as train

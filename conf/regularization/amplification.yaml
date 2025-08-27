@@ -1,0 +1,6 @@
+_target_: RegularizingEmbeddings.regularization.amplification.AmplificationRegularization
+n_neighbors: 10
+max_T: 5
+normalize: True
+epsilon: 1e-10
+dt: 1e-6  # Will be updated after data generation

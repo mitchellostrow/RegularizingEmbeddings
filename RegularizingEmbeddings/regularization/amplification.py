@@ -18,7 +18,7 @@ class AmplificationRegularization(AbstractRegularization):
     """
     
     def __init__(self, n_neighbors: int = 10, max_T: int = 5, normalize: bool = False, 
-                 epsilon: float = 1e-8):
+                 epsilon: float = 1e-8, dt: float = None):
         """
         Initialize the amplification regularization.
         
@@ -27,11 +27,13 @@ class AmplificationRegularization(AbstractRegularization):
             max_T: Maximum number of time steps to look ahead
             normalize: Whether to normalize the amplification by the sum of 1/eps_k
             epsilon: Small constant to avoid division by zero
+            dt: Time step (for compatibility with training script, not used in computation)
         """
         self.n_neighbors = n_neighbors
         self.max_T = max_T
         self.normalize = normalize
         self.epsilon = epsilon
+        self.dt = dt  # Store for compatibility, but not used in amplification computation
     
     def __call__(self, x: torch.Tensor) -> torch.Tensor:
         """
