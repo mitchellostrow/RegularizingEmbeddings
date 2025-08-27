@@ -54,7 +54,9 @@ class TanglingRegularization(AbstractRegularization):
         
         # Handle complex input by taking real part if necessary
         if torch.is_complex(x):
-            raise ValueError("Complex data is not supported for tangling regularization")
+            x =  torch.cat([x.real, x.imag], dim = -1)
+            D = D * 2
+            # raise ValueError("Complex data is not supported for tangling regularization")
         
         # reshape x to (B*S, D)
         x = x.reshape(-1, D)
@@ -98,12 +100,13 @@ class TanglingRegularization(AbstractRegularization):
                         Q[b, s] = max(Q[b, s], num/den)
 
        
-        return Q
+        return Q.mean()
 
     def efficient_implementation(self, x):
         # Handle complex input by taking real part if necessary
         if torch.is_complex(x):
-            x = x.real
+            # x = x.real
+            x = torch.concatenate([torch.real(x), torch.imag(x)], dim=-1)
         
         # Compute time derivatives
         dx = (x[:, 1:, :] - x[:, :-1, :]) / self.dt
@@ -136,4 +139,4 @@ class TanglingRegularization(AbstractRegularization):
         # Reshape back to (B, S)
         Q = max_ratios.reshape(B, S)
         
-        return Q
+        return Q.mean()
