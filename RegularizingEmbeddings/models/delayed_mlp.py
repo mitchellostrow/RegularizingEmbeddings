@@ -47,40 +47,44 @@ def embed_signal_torch(data, n_delays, delay_interval=1):
 
     return embedding
 
+class MLP(nn.Module):
+    def __init__(self, d_model, mlp_hidden, output_dim=None,dropout=0.0):
+        super().__init__()
+        if output_dim is None:
+            output_dim = d_model
+        self.c_fc = nn.Linear(d_model, mlp_hidden, bias=True)
+        self.gelu = nn.GELU()
+        self.dropout = nn.Dropout(dropout)
+        self.c_proj = nn.Linear(mlp_hidden, output_dim, bias=True)
+
+    def forward(self, x):
+        x = self.c_fc(x)
+        x = self.gelu(x)
+        x = self.dropout(x)
+        x = self.c_proj(x)
+        return x
+
 
 class DelayedMLP(nn.Module):
-    def __init__(self, input_dim, hidden_dims, output_dim, n_delays, delay_interval):
+    def __init__(self, input_dim, mlp_hidden, d_model, delay_interval):
         super().__init__()
 
-        # layernorm
-        self.ln = nn.LayerNorm(input_dim * n_delays)
+        # self.ln = nn.LayerNorm(input_dim * n_delays)
 
-        self.input = nn.Linear(n_delays * input_dim, hidden_dims[0])
-        self.fcs = nn.ModuleList(
-            [
-                nn.Linear(hidden_dims[i], hidden_dims[i + 1])
-                for i in range(len(hidden_dims) - 1)
-            ]
-        )
-        self.output = nn.Linear(hidden_dims[-1], output_dim)
-
-        self.n_delays = n_delays
+        self.mlp = MLP(input_dim * d_model, mlp_hidden, input_dim)
+        
+        self.n_delays = d_model
         self.delay_interval = delay_interval
 
-    def forward(self, x, epsilon=0):
+    def forward(self, x):
         # x should have shape (B, T, D)
         # first, reshape to have B,T-delay, D*delay
         # then add the first delays as well to the beginning of the sequence, concatenated with zeros
-        x = embed_signal_torch(x, self.n_delays, delay_interval=self.delay_interval)
-        x = self.ln(x)
-        x = self.input(x)
-        x = torch.relu(x)
+        with torch.no_grad():
+            x = embed_signal_torch(x, self.n_delays, delay_interval=self.delay_interval)
+        # x = self.ln(x)
         hidden = x.clone()
 
-        hidden = hidden + epsilon * torch.randn_like(hidden)
-
-        for fc in self.fcs:
-            x = fc(x)
-            x = torch.relu(x)
-        x = self.output(x)
+        x = self.mlp(x)
+       
         return x, hidden
