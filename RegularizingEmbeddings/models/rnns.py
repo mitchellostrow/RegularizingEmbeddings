@@ -56,7 +56,7 @@ class RNNBase(nn.Module):
 
         self.rnn = self.rnn(*args, **kwargs)
 
-    def forward(self, inputs, hidden=None, epsilon=0.0):
+    def forward(self, inputs, hidden=None):
         if hidden is None:
             hidden = Variable(inputs.new_zeros(1, inputs.size(0), self.hidden_size))
         if self.model_type == "LSTM":
@@ -69,9 +69,6 @@ class RNNBase(nn.Module):
         if self.training:
             hidden = self.dropout(self.hidden)
         out = self.out(self.hidden)
-
-        hidden = hidden + epsilon * torch.randn_like(hidden)
-
         return out, hidden
 
     @torch.no_grad()
@@ -99,38 +96,32 @@ class RNN(nn.Module):
         self.x2h = nn.Linear(input_dim, n * hidden_size, bias=True)
         self.h2h = nn.Linear(hidden_size, n * hidden_size, bias=True)
 
-    def forward(self, inputs, hidden=None, epsilon=0):
+    def forward(self, inputs, hidden=None):
         hiddens = []
         for time in range(inputs.shape[1]):
             hidden = self.forward_pass(inputs[:, time], hidden)
             hiddens.append(hidden)
         hiddens = torch.cat(hiddens, dim=0)
         hiddens = torch.permute(hiddens, (1, 0, 2))
-
-        hiddens = hiddens + epsilon * torch.randn_like(hiddens)
-
-        return None, hiddens
+        return hiddens, None
 
 
 class VanillaRNN(RNN):
     def __init__(self, input_dim, hidden_size, nonlinearity):
         super(VanillaRNN, self).__init__(input_dim, hidden_size, nonlinearity, n=1)
 
-    def forward_pass(self, input, hidden, epsilon=0.0):
+    def forward_pass(self, input, hidden):
         x_t = self.x2h(input)
         h_t = self.h2h(hidden)
         hidden = self.nonlinearity(x_t + h_t)
-
-        hidden = hidden + epsilon * torch.randn_like(hidden)
-
-        return None, hidden
+        return hidden
 
 
 class UGRNN(RNN):
     def __init__(self, input_dim, hidden_size, nonlinearity):
         super(UGRNN, self).__init__(input_dim, hidden_size, nonlinearity, n=2)
 
-    def forward_pass(self, input, hidden, epsilon=0.0):
+    def forward_pass(self, input, hidden):
         x_t = self.x2h(input)
         h_t = self.h2h(hidden)
         if len(h_t.shape) == 3:
@@ -140,9 +131,8 @@ class UGRNN(RNN):
         new_h = self.nonlinearity(x_c + h_c)
         update_gate = torch.sigmoid(x_g + h_g)
         hidden = update_gate * hidden + (1 - update_gate) * new_h
-        hidden = hidden + epsilon * torch.randn_like(hidden)
 
-        return None, hidden
+        return hidden
 
 
 ##we need to write our own class for LSTMs and GRUs if we want to use ReLU
@@ -150,7 +140,7 @@ class GRU(RNN):
     def __init__(self, input_dim, hidden_size, nonlinearity):
         super(GRU, self).__init__(input_dim, hidden_size, nonlinearity, n=3)
 
-    def forward_pass(self, input, hidden, epsilon=0.0):
+    def forward_pass(self, input, hidden):
         x_t = self.x2h(input)
         h_t = self.h2h(hidden).squeeze()
         dimx = 1 if len(x_t.shape) > 1 else 0
@@ -164,25 +154,21 @@ class GRU(RNN):
 
         hy = update_gate * hidden + (1 - update_gate) * new_gate
 
-        hy = hy + epsilon * torch.randn_like(hy)
-
-        return None, hy
+        return hy
 
 
 class LSTM(RNN):
     def __init__(self, input_dim, hidden_size, nonlinearity):
         super(LSTM, self).__init__(input_dim, hidden_size, nonlinearity, n=4)
 
-    def forward(self, inputs, hidden=None, epsilon=0.0):
+    def forward(self, inputs, hidden=None):
         hiddens = []
         for time in range(inputs.shape[1]):
             hidden = self.forward_pass(inputs[:, time], hidden)
             hiddens.append(hidden[0])  # only append hidden state
         hiddens = torch.cat(hiddens, dim=0)
         hiddens = torch.permute(hiddens, (1, 0, 2))
-
-        hiddens = hiddens + epsilon * torch.randn_like(hidden)
-        return None, hiddens
+        return hiddens, None
 
     def forward_pass(self, input, hidden):
         hidden, cell = hidden
@@ -202,4 +188,4 @@ class LSTM(RNN):
 
         hy = o_t * self.nonlinearity(cy)
 
-        return cy, hy
+        return hy, cy

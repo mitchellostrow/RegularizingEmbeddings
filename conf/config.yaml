@@ -1,6 +1,6 @@
 defaults:
   - training: train
-  - model: lru
+  - model: rnn
   - data: dysts
   - regularization: amplification
   # - slurm: default
